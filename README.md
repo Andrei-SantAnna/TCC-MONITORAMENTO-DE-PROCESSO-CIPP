@@ -14,5 +14,5 @@ O repositório está estruturado em um formato monorepo:
 
 ## Instalação e Execução
 ```bash
-git clone [https://github.com/SEU_USUARIO/cipp-telemetry-simulator.git](https://github.com/SEU_USUARIO/cipp-telemetry-simulator.git)
-cd cipp-telemetry-simulator
+git clone [https://github.com/Andrei-SantAnna/TCC-MONITORAMENTO-DE-PROCESSO-CIPP.git](https://github.com/Andrei-Sant.Anna/TCC-MONITORAMENTO-DE-PROCESSO-CIPP.git)
+cd cipp-simulador-telemetria
