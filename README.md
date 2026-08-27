@@ -24,10 +24,11 @@ pip install -r requerimentos.txt
 ```
 
 3. **Inicie o Servidor do Simulador**
-    Ainda dentro da backend, execute: 
+    Ainda dentro da `backend`, execute: 
 ```bash
 uvicorn main:app --reload
 ```
+O servidor estará escutando em `ws://localhost:8000/ws/simulador`.
 
 4. **Realize o teste de comunicação**
     Agora com o servidor iniciado e rodando, abra o arquivo teste.html (localizado na pasta tests) no navegador web para visualizar o streaming da telemetria e os alertas de desvio disparando em tempo real
