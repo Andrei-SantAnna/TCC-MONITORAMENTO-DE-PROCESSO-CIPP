@@ -13,6 +13,27 @@ O repositório está estruturado em um formato monorepo:
 - Python 3.8 ou mais recentes
 
 ## Instalação e Execução
+1. **Clone o repositório:**
 ```bash
-git clone [https://github.com/Andrei-SantAnna/TCC-MONITORAMENTO-DE-PROCESSO-CIPP.git](https://github.com/Andrei-Sant.Anna/TCC-MONITORAMENTO-DE-PROCESSO-CIPP.git)
-cd cipp-simulador-telemetria
+git clone [https://github.com/Andrei-SantAnna/TCC-MONITORAMENTO-DE-PROCESSO-CIPP.git](https://github.com/Andrei-SantAnna/TCC-MONITORAMENTO-DE-PROCESSO-CIPP.git)
+```
+2. **Instale as dependências do Backend**
+```bash
+cd TCC-MONITORAMENTO-DE-PROCESSO-CIPP/cipp-simulador-telemetria/backend
+pip install -r requirements.txt
+```
+
+3. **Inicie o Servidor do Simulador**
+    Ainda dentro da backend, execute: 
+```bash
+uvicorn main:app --reload
+```
+
+4. **Realize o teste de comunicação**
+    Agora com o servidor iniciado e rodando, abra o arquivo teste.html (localizado na pasta tests) no navegador web para visualizar o streaming da telemetria e os alertas de desvio disparando em tempo real
+
+## Notas
+No arquivo backend/main.py, a variável FATOR_ACELERACAO está configurada como 60.0 por padrão. Isso acelera o log para fins de demonstração acadêmica e testes (1 segundo na tela = 1 minuto de operação real da máquina). Para rodar uma simulação fiel à física da obra, ajuste o valor para 1.0.
+```
+Os arquivos `main.py` e `predictor.py` já estão salvos ali dentro de `backend`? Se sim, me avisa se o teste do arquivo HTML rodou liso para darmos o próximo passo rumo ao React!
+```
