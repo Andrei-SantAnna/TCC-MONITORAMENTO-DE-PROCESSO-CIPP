@@ -20,7 +20,7 @@ git clone [https://github.com/Andrei-SantAnna/TCC-MONITORAMENTO-DE-PROCESSO-CIPP
 2. **Instale as dependências do Backend**
 ```bash
 cd TCC-MONITORAMENTO-DE-PROCESSO-CIPP/cipp-simulador-telemetria/backend
-pip install -r requirements.txt
+pip install -r requerimentos.txt
 ```
 
 3. **Inicie o Servidor do Simulador**
@@ -34,6 +34,3 @@ uvicorn main:app --reload
 
 ## Notas
 No arquivo backend/main.py, a variável FATOR_ACELERACAO está configurada como 60.0 por padrão. Isso acelera o log para fins de demonstração acadêmica e testes (1 segundo na tela = 1 minuto de operação real da máquina). Para rodar uma simulação fiel à física da obra, ajuste o valor para 1.0.
-```
-Os arquivos `main.py` e `predictor.py` já estão salvos ali dentro de `backend`? Se sim, me avisa se o teste do arquivo HTML rodou liso para darmos o próximo passo rumo ao React!
-```
