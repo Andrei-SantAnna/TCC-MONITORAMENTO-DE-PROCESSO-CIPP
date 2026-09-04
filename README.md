@@ -19,7 +19,7 @@ git clone [https://github.com/Andrei-SantAnna/TCC-MONITORAMENTO-DE-PROCESSO-CIPP
 ```
 2. **Instale as dependências do Backend**
 ```bash
-cd TCC-MONITORAMENTO-DE-PROCESSO-CIPP/cipp-simulador-telemetria/backend
+cd TCC-MONITORAMENTO-DE-PROCESSO-CIPP/backend
 pip install -r requerimentos.txt
 ```
 
