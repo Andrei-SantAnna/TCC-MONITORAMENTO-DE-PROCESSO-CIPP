@@ -119,5 +119,3 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 15, color: '#1B3A6B', flexShrink: 1 },
   infoValue: { fontSize: 16, fontWeight: '700', color: '#1B3A6B' },
 });
-
-teste
