@@ -1,11 +1,20 @@
 # main.py
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 import json
 import os
-from predictor import avaliar_leitura
+from predictor import avaliar_leitura, gerar_inteligencia_preditiva
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------------------------------------------------------
 # SETUP DO REPLAY (Simulador de Telemetria)
@@ -14,7 +23,7 @@ app = FastAPI()
 # ---------------------------------------------------------
 FATOR_ACELERACAO = 60.0  
 
-# Variáveis do trecho (depois o frontend pode enviar isso dinamicamente)
+# Variáveis do trecho da obra que estamos simulando
 ESPESSURA_OBRA = 6.5
 DIAMETRO_OBRA = 800
 
@@ -36,11 +45,13 @@ async def websocket_endpoint(websocket: WebSocket):
     
     # Carrega um dos 4 logs extraídos
     log_bruto = carregar_log_real("89_TRECHO_IPP5-09_AO_IPP5-10.json")
+
+    historico_local = []
     
     try:
         for index, leitura_bruta in enumerate(log_bruto):
             
-            # Normalização de grandezas: O JSON traz speed_m_min, mas nossa regra usa cm/min
+            
             velocidade_m_min = leitura_bruta.get("speed_m_min")
             velocidade_cm = (velocidade_m_min * 100) if velocidade_m_min is not None else 0
             
@@ -52,20 +63,27 @@ async def websocket_endpoint(websocket: WebSocket):
                 "pressao_mbar": leitura_bruta.get("pressure_mbar"),
                 "temp1_c": leitura_bruta.get("temp1_c"),
                 "temp2_c": leitura_bruta.get("temp2_c"),
-                "temp3_c": leitura_bruta.get("temp3_c")
+                "temp3_c": leitura_bruta.get("temp3_c"),
+                "uv_lamps": leitura_bruta.get("uv_lamps", [])
             }
-            
-            # Aplica a inteligência do TCC
-            leitura_processada = avaliar_leitura(
+
+            historico_local.append(leitura_adaptada)
+
+            fisica = avaliar_leitura(
                 leitura=leitura_adaptada, 
                 espessura=ESPESSURA_OBRA, 
                 diametro=DIAMETRO_OBRA
             )
+
+            preditiva = gerar_inteligencia_preditiva(leitura_adaptada, historico_local, DIAMETRO_OBRA)
+
+            payload_final = {
+                "telemetria": fisica,
+                "inteligencia": preditiva
+            }
             
-            # Dispara via socket pro front consumir
-            await websocket.send_json(leitura_processada)
+            await websocket.send_json(payload_final)
             
-            # Clock da máquina simulado
             tempo_espera = 60 / FATOR_ACELERACAO
             await asyncio.sleep(tempo_espera) 
             
