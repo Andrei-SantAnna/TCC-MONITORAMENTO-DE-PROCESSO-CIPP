@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, View, Dimensions, Modal, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Dimensions, Modal, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart } from 'react-native-chart-kit';
 import { useSensorSocket } from '../hooks/useSensorSocket';
 
@@ -117,7 +118,7 @@ export default function TelaSensores() {
           <Text style={styles.cardLabel}>MÓDULO DE CURA UV</Text>
           <View style={styles.lampRow}>
             {telemetria.uv_lamps?.map((lamp, index) => (
-              <View key={index} style={[styles.lampBox, lamp > 0 ? styles.lampOn : styles.lampOff]}>
+              <View key={`lampada-${index + 1}`} style={[styles.lampBox, lamp > 0 ? styles.lampOn : styles.lampOff]}>
                 <Text style={styles.lampText}>{index + 1}</Text>
               </View>
             ))}
