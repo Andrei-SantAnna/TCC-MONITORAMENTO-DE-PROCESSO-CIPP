@@ -134,6 +134,7 @@ export default function TelaSensores() {
                 width={chartWidth}
                 height={220}
                 yAxisSuffix="°C"
+                withDots={false}
                 chartConfig={{
                   backgroundColor: "#ffffff",
                   backgroundGradientFrom: "#ffffff",

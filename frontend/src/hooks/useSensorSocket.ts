@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { WS_URL } from '../services/websocket';
+import { useMonitoramento } from './useMonitoramento';
 
 export interface LeituraSensor {
   minuto: number;
@@ -31,7 +32,13 @@ export function useSensorSocket() {
   const [conectado, setConectado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  const { monitoramentoAtivo } = useMonitoramento();
   useEffect(() => {
+
+    if (!monitoramentoAtivo) {
+      return;
+    }
+
     const ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
@@ -56,7 +63,7 @@ export function useSensorSocket() {
     ws.onclose = () => setConectado(false);
 
     return () => ws.close();
-  }, []);
+  }, [monitoramentoAtivo]);
 
   return { telemetria, inteligencia, historico, finalizado, conectado, erro };
 }
