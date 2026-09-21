@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 import json
 import os
+import math
 from predictor import avaliar_leitura, gerar_inteligencia_preditiva
 
 app = FastAPI()
@@ -28,12 +29,19 @@ ESPESSURA_OBRA = 6.5
 DIAMETRO_OBRA = 800
 
 def carregar_log_real(nome_arquivo):
-    """Lê o JSON estruturado pelo parser na pasta 'data'."""
+    """Lê o JSON estruturado na pasta 'data'."""
     caminho = os.path.join("..", "data", nome_arquivo)
     try:
         with open(caminho, "r", encoding="utf-8") as f:
             dados = json.load(f)
-            return dados.get("readings", [])
+
+            if isinstance(dados, list):
+                return dados
+            elif isinstance(dados, dict):
+                return dados.get("readings", [])
+            else:
+                return []
+                
     except FileNotFoundError:
         print(f"Erro: Arquivo {nome_arquivo} não encontrado na pasta data/")
         return []
@@ -44,21 +52,24 @@ async def websocket_endpoint(websocket: WebSocket):
     print("Dashboard conectado. Iniciando disparo da telemetria real...")
     
     # Carrega um dos 4 logs extraídos
-    log_bruto = carregar_log_real("89_TRECHO_IPP5-09_AO_IPP5-10.json")
+    log_bruto = carregar_log_real("simulacao_completa.json")
 
     historico_local = []
+
+    DISTANCIA_ALVO_M = 0.0
     
     try:
         for index, leitura_bruta in enumerate(log_bruto):
             
-            
+            # 1. Pega os dados originais
             velocidade_m_min = leitura_bruta.get("speed_m_min")
             velocidade_cm = (velocidade_m_min * 100) if velocidade_m_min is not None else 0
             
-            # Criamos um dicionário adaptado para o motor de regras
+            # 2. **CRIA A LEITURA ADAPTADA PRIMEIRO**
             leitura_adaptada = {
                 "minuto": index + 1,
                 "time": leitura_bruta.get("time"),
+                "distancia_m": leitura_bruta.get("distance_m", 0.0),
                 "velocidade_cm_min": round(velocidade_cm, 2),
                 "pressao_mbar": leitura_bruta.get("pressure_mbar"),
                 "temp1_c": leitura_bruta.get("temp1_c"),
@@ -66,27 +77,53 @@ async def websocket_endpoint(websocket: WebSocket):
                 "temp3_c": leitura_bruta.get("temp3_c"),
                 "uv_lamps": leitura_bruta.get("uv_lamps", [])
             }
-
+            
+            # Adiciona ao histórico
             historico_local.append(leitura_adaptada)
 
-            fisica = avaliar_leitura(
-                leitura=leitura_adaptada, 
-                espessura=ESPESSURA_OBRA, 
-                diametro=DIAMETRO_OBRA
-            )
+            # ----------------------------------------------------
+            # 3. LÓGICA DE PREVISÃO DE CURA
+            # ----------------------------------------------------
+            DISTANCIA_ALVO_M = 0.0
+            distancia_atual_m = leitura_bruta.get("distance_m", 0.0)
+            velocidade_m_min = leitura_bruta.get("speed_m_min", 0.0)
 
+            distancia_restante_m = abs(DISTANCIA_ALVO_M - distancia_atual_m)
+            
+            if velocidade_m_min and velocidade_m_min > 0:
+                tempo_estimado_min = distancia_restante_m / velocidade_m_min
+                horas = int(tempo_estimado_min // 60)
+                minutos = int(tempo_estimado_min % 60)
+                tempo_texto = f"{horas}h {minutos}m"
+                status_mov = "Cura em andamento"
+            else:
+                tempo_estimado_min = 0
+                tempo_texto = "--h --m"
+                status_mov = "Carrinho Parado"
+            
+            predicao_cura = {
+                "distancia_restante_m": round(distancia_restante_m, 2),
+                "tempo_estimado_min": tempo_estimado_min,
+                "tempo_texto": tempo_texto,
+                "status_movimento": status_mov
+            }
+            fisica = avaliar_leitura(leitura_adaptada, ESPESSURA_OBRA, DIAMETRO_OBRA)
             preditiva = gerar_inteligencia_preditiva(leitura_adaptada, historico_local, DIAMETRO_OBRA)
-
+            
             payload_final = {
                 "telemetria": fisica,
-                "inteligencia": preditiva
+                "inteligencia": preditiva,
+                "previsao_cura": predicao_cura
             }
             
+            # Envia via socket
             await websocket.send_json(payload_final)
             
+            # Espera simulador
             tempo_espera = 60 / FATOR_ACELERACAO
-            await asyncio.sleep(tempo_espera) 
-            
+            await asyncio.sleep(tempo_espera)
+
+        # Fora do loop
         await websocket.send_json({"status": "finalizado", "mensagem": "Processo de cura finalizado."})
         print("Replay do log finalizado.")
         

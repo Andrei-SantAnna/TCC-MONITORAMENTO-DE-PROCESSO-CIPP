@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSensorSocket } from '../hooks/useSensorSocket';
 
 export default function TelaPrevisoes() {
-  const { inteligencia, conectado, erro } = useSensorSocket();
+  const { inteligencia, previsaoCura, conectado, erro } = useSensorSocket();
 
   if (!conectado && !erro) {
     return (
@@ -15,7 +15,7 @@ export default function TelaPrevisoes() {
     );
   }
 
-  if (erro || !inteligencia) {
+  if (erro || !inteligencia || !previsaoCura) {
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
         <Ionicons name="hourglass-outline" size={40} color="#8895A7" />
@@ -35,6 +35,30 @@ export default function TelaPrevisoes() {
 
       <ScrollView contentContainerStyle={styles.content}>
         
+        {/* NOVO CARD PREVISÃO FÍSICA */}
+        <View style={[styles.card, styles.cardBorderGreen]}>
+          <Text style={styles.cardLabel}>PREVISÃO DE TÉRMINO DA CURA</Text>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Status:</Text>
+            <Text style={[styles.infoValue, previsaoCura.status_movimento === 'Carrinho Parado' ? { color: '#F5A623' } : { color: '#1E8449' }]}>
+              {previsaoCura.status_movimento}
+            </Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Distância Restante:</Text>
+            <Text style={styles.infoValue}>{previsaoCura.distancia_restante_m} m</Text>
+          </View>
+
+          <View style={{ marginTop: 15, alignItems: 'center' }}>
+            <Text style={styles.cardLabel}>FINALIZAÇÃO ESTIMADA EM:</Text>
+            <Text style={[styles.bigValue, { color: '#1E8449', fontSize: 36, marginTop: 5 }]}>
+              {previsaoCura.tempo_texto}
+            </Text>
+          </View>
+        </View>
+
         <View style={[styles.card, ignicao_segura.pronta ? styles.cardBorderGreen : styles.cardBorderOrange]}>
           <View style={styles.rowStart}>
             <Ionicons 
@@ -62,7 +86,6 @@ export default function TelaPrevisoes() {
           </View>
         )}
 
-        {/* Diretrizes de Ignição do Manual */}
         <View style={[styles.card, styles.cardBorderBlue]}>
           <Text style={styles.cardLabel}>DIRETRIZ DE IGNIÇÃO UV (ANEXO 8)</Text>
           <View style={styles.infoRow}>
@@ -118,5 +141,5 @@ const styles = StyleSheet.create({
   bigValue: { fontSize: 30, fontWeight: 'bold', color: '#1B3A6B' },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   infoLabel: { fontSize: 15, color: '#1B3A6B', flexShrink: 1 },
-  infoValue: { fontSize: 16, fontWeight: '700', color: '#1B3A6B' },
+  infoValue: { fontSize: 16, fontWeight: '700', color: '#1B3A6B' }
 });

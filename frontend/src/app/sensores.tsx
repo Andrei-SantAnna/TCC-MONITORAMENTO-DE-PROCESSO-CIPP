@@ -8,7 +8,7 @@ import { useSensorSocket } from '../hooks/useSensorSocket';
 const screenWidth = Dimensions.get("window").width;
 
 export default function TelaSensores() {
-  const { telemetria, historico, finalizado, conectado, erro } = useSensorSocket();
+  const { telemetria, historico, previsaoCura, finalizado, conectado, erro } = useSensorSocket();
   const [modalFechado, setModalFechado] = useState(false);
 
   if (!conectado && !erro) {
@@ -29,7 +29,7 @@ export default function TelaSensores() {
     );
   }
 
-  if (!telemetria) {
+  if (!telemetria || !previsaoCura) {
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
         <ActivityIndicator size="large" color="#2E7DD7" />
@@ -42,12 +42,12 @@ export default function TelaSensores() {
     labels: historico.map(h => `${h.minuto}m`),
     datasets: [
       {
-        data: historico.map(h => h.temp2_c),
+        data: historico.map(h => h.temp2_c || 0),
         color: (opacity = 1) => `rgba(245, 166, 35, ${opacity})`,
         strokeWidth: 2
       },
       {
-        data: historico.map(h => h.temp3_c),
+        data: historico.map(h => h.temp3_c || 0),
         color: (opacity = 1) => `rgba(230, 57, 70, ${opacity})`,
         strokeWidth: 2
       }
@@ -66,9 +66,19 @@ export default function TelaSensores() {
 
       <ScrollView contentContainerStyle={styles.content}>
         
+        {/* CARD LOCALIZAÇÃO */}
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>LOCALIZAÇÃO NO TRECHO</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Distância Atual</Text>
+            {/* CORREÇÃO: Usando o (variável ?? 0) para evitar quebra se vier undefined */}
+            <Text style={styles.bigValue}>{(telemetria.distancia_m ?? 0).toFixed(2)} m</Text>
+          </View>
+        </View>
+
         <View style={[styles.card, styles.cardBorderBlue]}>
           <Text style={styles.cardLabel}>PRESSÃO INTERNA</Text>
-          <Text style={styles.bigValue}>{telemetria.pressao_mbar.toFixed(2)} mbar</Text>
+          <Text style={styles.bigValue}>{(telemetria.pressao_mbar ?? 0).toFixed(2)} mbar</Text>
         </View>
 
         <View style={[styles.card, telemetria.alerta && styles.cardBorderOrange]}>
@@ -84,15 +94,14 @@ export default function TelaSensores() {
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Velocidade de Tração</Text>
             <Text style={[styles.infoValue, telemetria.alerta && styles.valueCritico]}>
-              {(telemetria.velocidade_cm_min / 100).toFixed(2)} m/min
+              {((telemetria.velocidade_cm_min ?? 0) / 100).toFixed(2)} m/min
             </Text>
           </View>
-
           {telemetria.alerta && (
             <View style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: '#E63946', fontWeight: 'bold' }]}>Limite Teórico Excedido</Text>
               <Text style={[styles.infoValue, { color: '#E63946' }]}>
-                {(telemetria.limite_teorico / 100).toFixed(2)} m/min
+                {((telemetria.limite_teorico ?? 0) / 100).toFixed(2)} m/min
               </Text>
             </View>
           )}
@@ -102,15 +111,15 @@ export default function TelaSensores() {
           <Text style={styles.cardLabel}>TEMPERATURAS DO LINER</Text>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Sensor 1 (T1)</Text>
-            <Text style={styles.infoValue}>{telemetria.temp1_c.toFixed(1)} °C</Text>
+            <Text style={styles.infoValue}>{(telemetria.temp1_c ?? 0).toFixed(1)} °C</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Sensor 2 (T2)</Text>
-            <Text style={styles.infoValue}>{telemetria.temp2_c.toFixed(1)} °C</Text>
+            <Text style={styles.infoValue}>{(telemetria.temp2_c ?? 0).toFixed(1)} °C</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Sensor 3 (T3)</Text>
-            <Text style={styles.infoValue}>{telemetria.temp3_c.toFixed(1)} °C</Text>
+            <Text style={styles.infoValue}>{(telemetria.temp3_c ?? 0).toFixed(1)} °C</Text>
           </View>
         </View>
 
@@ -133,7 +142,7 @@ export default function TelaSensores() {
                 data={chartData}
                 width={chartWidth}
                 height={220}
-                yAxisSuffix="°C"
+                yAxisSuffix="°"
                 withDots={false}
                 chartConfig={{
                   backgroundColor: "#ffffff",
