@@ -1,17 +1,20 @@
-// app/_layout.tsx
 import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// Importe o Provedor e o Hook do interruptor
 import { MonitoramentoProvider, useMonitoramento } from '../hooks/useMonitoramento';
+import { SensorProvider } from '../hooks/useSensorSocket'; 
+// Funções para renderizar os ícones das abas
+const renderCameraIcon = ({ color, size }: { color: any, size: number }) => <Ionicons name="videocam-outline" size={size} color={color} />;
+const renderSensoresIcon = ({ color, size }: { color: any, size: number }) => <Ionicons name="speedometer-outline" size={size} color={color} />;
+const renderPrevisoesIcon = ({ color, size }: { color: any, size: number }) => <Ionicons name="settings-outline" size={size} color={color} />;
 
-// Componente interno que renderiza as Abas e o Modal
+
 function LayoutPrincipal() {
   const { monitoramentoAtivo, iniciarMonitoramento } = useMonitoramento();
 
   const handleIniciar = () => {
-    iniciarMonitoramento(); // Isso muda para true e destrava a conexão no useSensorSocket
+    iniciarMonitoramento(); 
     router.replace('/sensores');
   };
 
@@ -20,20 +23,19 @@ function LayoutPrincipal() {
       <Tabs screenOptions={{ tabBarActiveTintColor: '#2E7DD7', headerShown: false }}>
         <Tabs.Screen
           name="camera"
-          options={{ title: 'Câmera', tabBarIcon: ({ color, size }) => <Ionicons name="videocam-outline" size={size} color={color} /> }}
+          options={{ title: 'Câmera', tabBarIcon: renderCameraIcon }}
         />
         <Tabs.Screen
           name="sensores"
-          options={{ title: 'Sensores', tabBarIcon: ({ color, size }) => <Ionicons name="speedometer-outline" size={size} color={color} /> }}
+          options={{ title: 'Sensores', tabBarIcon: renderSensoresIcon }}
         />
         <Tabs.Screen
           name="previsoes"
-          options={{ title: 'Previsões', tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" size={size} color={color} /> }}
+          options={{ title: 'Previsões', tabBarIcon: renderPrevisoesIcon }}
         />
         <Tabs.Screen name="index" options={{ href: null }} />
       </Tabs>
 
-      {/* OVERLAY GLOBAL DO GUIA CIPP - Aparece enquanto o monitoramento NÃO estiver ativo */}
       <Modal visible={!monitoramentoAtivo} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <SafeAreaView style={styles.safeContainer}>
@@ -47,7 +49,6 @@ function LayoutPrincipal() {
                 Bem-vindo ao sistema de telemetria preditiva. Antes de iniciar, entenda os parâmetros operacionais de segurança do processo de cura UV:
               </Text>
 
-              {/* Módulo de Cura UV */}
               <View style={styles.card}>
                 <View style={styles.rowTitle}>
                   <Ionicons name="sunny-outline" size={24} color="#6600FF" />
@@ -58,7 +59,6 @@ function LayoutPrincipal() {
                 </Text>
               </View>
 
-              {/* Zonas de Temperatura */}
               <View style={styles.card}>
                 <View style={styles.rowTitle}>
                   <Ionicons name="thermometer-outline" size={24} color="#E63946" />
@@ -67,7 +67,6 @@ function LayoutPrincipal() {
                 <Text style={styles.cardDesc}>
                   Os sensores acompanham a termodinâmica da reação química para garantir que o liner cure perfeitamente sem danos:
                 </Text>
-
                 <View style={styles.sensorItem}>
                   <Text style={styles.sensorBadge}>T1</Text>
                   <Text style={styles.sensorText}><Text style={styles.bold}>Ambiente:</Text> Mede a temperatura frontal dentro do duto isolado.</Text>
@@ -81,7 +80,6 @@ function LayoutPrincipal() {
                   <Text style={styles.sensorText}><Text style={styles.bold}>Alerta ({'>'} 120°C):</Text> Limite superior. Acima desta média, o limite da Velocidade de Tração sofrerá acréscimo de 10% para evitar a queima.</Text>
                 </View>
               </View>
-
             </ScrollView>
 
             <View style={styles.footer}>
@@ -100,11 +98,13 @@ function LayoutPrincipal() {
   );
 }
 
-// O componente Exportado obrigatoriamente envolve o Layout com o Provedor (Context API)
+// O COMPONENTE EXPORTADO AGORA INCLUI O SENSOR PROVIDER
 export default function TabLayout() {
   return (
     <MonitoramentoProvider>
-      <LayoutPrincipal />
+      <SensorProvider>
+        <LayoutPrincipal />
+      </SensorProvider>
     </MonitoramentoProvider>
   );
 }
