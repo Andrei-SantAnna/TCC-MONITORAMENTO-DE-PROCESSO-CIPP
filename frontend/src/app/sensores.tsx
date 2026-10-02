@@ -108,17 +108,25 @@ export default function TelaSensores() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>TEMPERATURAS DO LINER</Text>
+          <Text style={styles.cardLabel}>TEMPERATURAS DO LINER E AMBIENTE</Text>
+          
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Sensor 1 (T1)</Text>
+            <Text style={styles.infoLabel}>Ambiente (Ar)</Text>
+            <Text style={[styles.infoValue, { color: '#8895A7' }]}>{(telemetria.temp_ambiente_c ?? 0).toFixed(1)} °C</Text>
+          </View>
+          
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Liner Sensor 1 (T1)</Text>
             <Text style={styles.infoValue}>{(telemetria.temp1_c ?? 0).toFixed(1)} °C</Text>
           </View>
+          
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Sensor 2 (T2)</Text>
+            <Text style={styles.infoLabel}>Liner Sensor 2 (T2)</Text>
             <Text style={styles.infoValue}>{(telemetria.temp2_c ?? 0).toFixed(1)} °C</Text>
           </View>
+          
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Sensor 3 (T3)</Text>
+            <Text style={styles.infoLabel}>Liner Sensor 3 (T3)</Text>
             <Text style={styles.infoValue}>{(telemetria.temp3_c ?? 0).toFixed(1)} °C</Text>
           </View>
         </View>

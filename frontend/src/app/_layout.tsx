@@ -68,16 +68,16 @@ function LayoutPrincipal() {
                   Os sensores acompanham a termodinâmica da reação química para garantir que o liner cure perfeitamente sem danos:
                 </Text>
                 <View style={styles.sensorItem}>
-                  <Text style={styles.sensorBadge}>T1</Text>
-                  <Text style={styles.sensorText}><Text style={styles.bold}>Ambiente:</Text> Mede a temperatura frontal dentro do duto isolado.</Text>
+                  <Text style={styles.sensorBadge}>Amb.</Text>
+                  <Text style={styles.sensorText}><Text style={styles.bold}>Ambiente:</Text> Mede a temperatura do ar no interior do duto isolado.</Text>
                 </View>
                 <View style={styles.sensorItem}>
-                  <Text style={styles.sensorBadge}>T2</Text>
-                  <Text style={styles.sensorText}><Text style={styles.bold}>Trabalho (80°C a 120°C):</Text> Faixa ideal da superfície. Garante que a resina atingiu o calor necessário para o endurecimento.</Text>
+                  <Text style={styles.sensorBadge}>T1/T2</Text>
+                  <Text style={styles.sensorText}><Text style={styles.bold}>Trabalho (80°C a 120°C):</Text> Sensores do Liner. Garantem que a resina atingiu o calor necessário para o endurecimento adequado.</Text>
                 </View>
                 <View style={styles.sensorItem}>
                   <Text style={styles.sensorBadge}>T3</Text>
-                  <Text style={styles.sensorText}><Text style={styles.bold}>Alerta ({'>'} 120°C):</Text> Limite superior. Acima desta média, o limite da Velocidade de Tração sofrerá acréscimo de 10% para evitar a queima.</Text>
+                  <Text style={styles.sensorText}><Text style={styles.bold}>Alerta ({'>'} 120°C):</Text> Limite superior. Acima desta média, o limite da Velocidade de Tração sofrerá acréscimo para evitar queima.</Text>
                 </View>
               </View>
             </ScrollView>

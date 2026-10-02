@@ -75,6 +75,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "temp1_c": leitura_bruta.get("temp1_c"),
                 "temp2_c": leitura_bruta.get("temp2_c"),
                 "temp3_c": leitura_bruta.get("temp3_c"),
+                "temp_ambiente_c": leitura_bruta.get("ambient_temp_c", 0.0),
                 "uv_lamps": leitura_bruta.get("uv_lamps", [])
             }
             

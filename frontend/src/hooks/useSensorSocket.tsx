@@ -11,6 +11,7 @@ export interface LeituraSensor {
   temp1_c: number;
   temp2_c: number;
   temp3_c: number;
+  temp_ambiente_c: number;
   uv_lamps: number[]; 
   limite_teorico: number;
   desvio_cm_min: number;
