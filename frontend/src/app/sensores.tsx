@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Dimensions, Modal, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart } from 'react-native-chart-kit';
+import { useMonitoramento } from '../hooks/useMonitoramento';
 import { useSensorSocket } from '../hooks/useSensorSocket';
 
 const screenWidth = Dimensions.get("window").width;
 
 export default function TelaSensores() {
+  const { iniciarMonitoramento } = useMonitoramento();
   const { telemetria, historico, previsaoCura, finalizado, conectado, erro } = useSensorSocket();
   const [modalFechado, setModalFechado] = useState(false);
+
+  useEffect(() => {
+    iniciarMonitoramento();
+  }, [iniciarMonitoramento]);
 
   if (!conectado && !erro) {
     return (
