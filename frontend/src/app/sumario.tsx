@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 type Topico = {
   icone: keyof typeof Ionicons.glyphMap;
@@ -81,9 +82,14 @@ const TOPICOS: Topico[] = [
 ];
 
 export default function TelaSumario() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
         <Text style={styles.headerLabel}>GUIA DO SISTEMA CIPP</Text>
         <Text style={styles.headerTitle}>Sumário dos sensores</Text>
       </View>
@@ -116,6 +122,7 @@ export default function TelaSumario() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F5F7FA' },
   header: { backgroundColor: '#1B3A6B', paddingHorizontal: 20, paddingVertical: 18 },
+  backButton: { marginBottom: 10, width: 32 },
   headerLabel: { color: '#9FB3D1', fontSize: 12, fontWeight: '600', letterSpacing: 0.5, marginBottom: 4 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
   content: { padding: 16, paddingBottom: 40 },
