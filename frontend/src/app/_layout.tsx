@@ -22,7 +22,12 @@ function LayoutPrincipal() {
     <Tabs screenOptions={{ tabBarActiveTintColor: '#2E7DD7', headerShown: false }}>
       <Tabs.Screen
         name="index"
-        options={{ title: 'Início', tabBarIcon: renderHomeIcon }}
+        options={{ title: 'Início', 
+          tabBarIcon: ({color, size}) =>(
+            <Ionicons name='book-outline' size={size} color={color as string}></Ionicons>
+          ),
+          tabBarStyle:{display:'none'} 
+        }}
       />
       <Tabs.Screen
         name="sensores"
@@ -30,7 +35,13 @@ function LayoutPrincipal() {
       />
       <Tabs.Screen
         name="sumario"
-        options={{ title: 'Sumário', tabBarIcon: renderSumarioIcon }}
+        options={{
+          title: 'Sumario',
+          tabBarIcon: ({color, size}) => (
+            <Ionicons name = "book-outline" size={size} color={color as string} />
+          ),
+          tabBarStyle: {display: 'none'},
+        }}
       />
       <Tabs.Screen
         name="previsoes"
