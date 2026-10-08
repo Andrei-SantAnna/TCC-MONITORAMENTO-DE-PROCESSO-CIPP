@@ -3,12 +3,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Dimensions, Modal, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart } from 'react-native-chart-kit';
+import { useRouter } from 'expo-router';
 import { useMonitoramento } from '../hooks/useMonitoramento';
 import { useSensorSocket } from '../hooks/useSensorSocket';
 
 const screenWidth = Dimensions.get("window").width;
 
 export default function TelaSensores() {
+  const router = useRouter();
   const { iniciarMonitoramento } = useMonitoramento();
   const { telemetria, historico, previsaoCura, finalizado, conectado, erro } = useSensorSocket();
   const [modalFechado, setModalFechado] = useState(false);
@@ -17,9 +19,14 @@ export default function TelaSensores() {
     iniciarMonitoramento();
   }, [iniciarMonitoramento]);
 
+  const voltar = () => router.replace('/');
+
   if (!conectado && !erro) {
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
+        <TouchableOpacity style={styles.backButtonFloating} onPress={voltar}>
+          <Ionicons name="arrow-back" size={24} color="#1B3A6B" />
+        </TouchableOpacity>
         <ActivityIndicator size="large" color="#2E7DD7" />
         <Text style={styles.loadingText}>Conectando ao simulador...</Text>
       </SafeAreaView>
@@ -29,6 +36,9 @@ export default function TelaSensores() {
   if (erro) {
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
+        <TouchableOpacity style={styles.backButtonFloating} onPress={voltar}>
+          <Ionicons name="arrow-back" size={24} color="#1B3A6B" />
+        </TouchableOpacity>
         <Ionicons name="alert-circle-outline" size={40} color="#E63946" />
         <Text style={styles.errorText}>{erro}</Text>
       </SafeAreaView>
@@ -38,6 +48,9 @@ export default function TelaSensores() {
   if (!telemetria || !previsaoCura) {
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
+        <TouchableOpacity style={styles.backButtonFloating} onPress={voltar}>
+          <Ionicons name="arrow-back" size={24} color="#1B3A6B" />
+        </TouchableOpacity>
         <ActivityIndicator size="large" color="#2E7DD7" />
         <Text style={styles.loadingText}>Aguardando primeira leitura...</Text>
       </SafeAreaView>
@@ -66,18 +79,20 @@ export default function TelaSensores() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={voltar}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
         <Text style={styles.headerLabel}>MONITORAMENTO DA CURA</Text>
         <Text style={styles.headerTitle}>Sensores - Telemetria</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        
+
         {/* CARD LOCALIZAÇÃO */}
         <View style={styles.card}>
           <Text style={styles.cardLabel}>LOCALIZAÇÃO NO TRECHO</Text>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Distância Atual</Text>
-            {/* CORREÇÃO: Usando o (variável ?? 0) para evitar quebra se vier undefined */}
             <Text style={styles.bigValue}>{(telemetria.distancia_m ?? 0).toFixed(2)} m</Text>
           </View>
         </View>
@@ -96,7 +111,7 @@ export default function TelaSensores() {
               </View>
             )}
           </View>
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Velocidade de Tração</Text>
             <Text style={[styles.infoValue, telemetria.alerta && styles.valueCritico]}>
@@ -115,22 +130,22 @@ export default function TelaSensores() {
 
         <View style={styles.card}>
           <Text style={styles.cardLabel}>TEMPERATURAS DO LINER E AMBIENTE</Text>
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Ambiente (Ar)</Text>
             <Text style={[styles.infoValue, { color: '#8895A7' }]}>{(telemetria.temp_ambiente_c ?? 0).toFixed(1)} °C</Text>
           </View>
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Liner Sensor 1 (T1)</Text>
             <Text style={styles.infoValue}>{(telemetria.temp1_c ?? 0).toFixed(1)} °C</Text>
           </View>
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Liner Sensor 2 (T2)</Text>
             <Text style={styles.infoValue}>{(telemetria.temp2_c ?? 0).toFixed(1)} °C</Text>
           </View>
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Liner Sensor 3 (T3)</Text>
             <Text style={styles.infoValue}>{(telemetria.temp3_c ?? 0).toFixed(1)} °C</Text>
@@ -182,9 +197,9 @@ export default function TelaSensores() {
             <Ionicons name="checkmark-circle" size={80} color="#1E8449" />
             <Text style={styles.modalTitle}>Cura Finalizada</Text>
             <Text style={styles.modalText}>O processo CIPP foi concluído com sucesso e o streaming de telemetria foi encerrado.</Text>
-            
-            <TouchableOpacity 
-              style={styles.modalButton} 
+
+            <TouchableOpacity
+              style={styles.modalButton}
               onPress={() => setModalFechado(true)}
             >
               <Text style={styles.modalButtonText}>Ver Relatório Final</Text>
@@ -200,13 +215,15 @@ export default function TelaSensores() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F5F7FA' },
   header: { backgroundColor: '#1B3A6B', paddingHorizontal: 20, paddingVertical: 18 },
+  backButton: { marginBottom: 10, width: 32 },
+  backButtonFloating: { position: 'absolute', top: 16, left: 16, padding: 4, zIndex: 10 },
   headerLabel: { color: '#9FB3D1', fontSize: 12, fontWeight: '600', letterSpacing: 0.5, marginBottom: 4 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
   content: { padding: 16, gap: 12 },
   card: { backgroundColor: '#fff', borderRadius: 14, padding: 16, gap: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  center:{justifyContent: 'center', alignItems: 'center'},
-  loadingText:{ marginTop: 12, fontSize: 16, color: '#1B3A6B'},
-  errorText:{ marginTop: 12, fontSize: 16, color: '#E63946', textAlign: 'center', paddingHorizontal: 20 },
+  center: { justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, fontSize: 16, color: '#1B3A6B' },
+  errorText: { marginTop: 12, fontSize: 16, color: '#E63946', textAlign: 'center', paddingHorizontal: 20 },
   cardBorderBlue: { borderLeftWidth: 4, borderLeftColor: '#2E7DD7' },
   cardBorderOrange: { borderLeftWidth: 4, borderLeftColor: '#F5A623' },
   cardLabel: { fontSize: 12, fontWeight: '700', color: '#8895A7', letterSpacing: 0.5 },

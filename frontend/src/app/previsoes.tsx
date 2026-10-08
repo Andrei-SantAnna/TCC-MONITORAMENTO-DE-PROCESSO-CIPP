@@ -1,14 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useSensorSocket } from '../hooks/useSensorSocket';
 
 export default function TelaPrevisoes() {
+  const router = useRouter();
   const { inteligencia, previsaoCura, conectado, erro } = useSensorSocket();
+
+  const voltar = () => router.replace('/');
 
   if (!conectado && !erro) {
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
+        <TouchableOpacity style={styles.backButtonFloating} onPress={voltar}>
+          <Ionicons name="arrow-back" size={24} color="#1B3A6B" />
+        </TouchableOpacity>
         <ActivityIndicator size="large" color="#2E7DD7" />
         <Text style={styles.loadingText}>Conectando ao simulador...</Text>
       </SafeAreaView>
@@ -18,6 +25,9 @@ export default function TelaPrevisoes() {
   if (erro || !inteligencia || !previsaoCura) {
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
+        <TouchableOpacity style={styles.backButtonFloating} onPress={voltar}>
+          <Ionicons name="arrow-back" size={24} color="#1B3A6B" />
+        </TouchableOpacity>
         <Ionicons name="hourglass-outline" size={40} color="#8895A7" />
         <Text style={styles.loadingText}>Processando algoritmos preditivos...</Text>
       </SafeAreaView>
@@ -29,12 +39,15 @@ export default function TelaPrevisoes() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={voltar}>
+          <Ionicons name="arrow-back" size={22} color="#fff" />
+        </TouchableOpacity>
         <Text style={styles.headerLabel}>MONITORAMENTO DA CURA</Text>
         <Text style={styles.headerTitle}>Inteligência Preditiva</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        
+
         {/* NOVO CARD PREVISÃO FÍSICA */}
         <View style={[styles.card, styles.cardBorderGreen]}>
           <Text style={styles.cardLabel}>PREVISÃO DE TÉRMINO DA CURA</Text>
@@ -61,18 +74,18 @@ export default function TelaPrevisoes() {
 
         <View style={[styles.card, ignicao_segura.pronta ? styles.cardBorderGreen : styles.cardBorderOrange]}>
           <View style={styles.rowStart}>
-            <Ionicons 
-              name={ignicao_segura.pronta ? "checkmark-circle" : "timer-outline"} 
-              size={24} 
-              color={ignicao_segura.pronta ? "#1E8449" : "#F5A623"} 
+            <Ionicons
+              name={ignicao_segura.pronta ? "checkmark-circle" : "timer-outline"}
+              size={24}
+              color={ignicao_segura.pronta ? "#1E8449" : "#F5A623"}
             />
             <Text style={styles.infoValue}>
               {ignicao_segura.pronta ? 'Pressão Estabilizada' : 'Aguardando Estabilidade'}
             </Text>
           </View>
           <Text style={styles.infoLabel}>
-            {ignicao_segura.pronta 
-              ? 'A pressão de trabalho se manteve constante por 10 minutos. O manual autoriza o início da ignição.' 
+            {ignicao_segura.pronta
+              ? 'A pressão de trabalho se manteve constante por 10 minutos. O manual autoriza o início da ignição.'
               : 'O manual exige pressão constante por 10 min antes da ignição para evitar danos no liner.'}
           </Text>
         </View>
@@ -126,12 +139,14 @@ export default function TelaPrevisoes() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F5F7FA' },
   header: { backgroundColor: '#1B3A6B', paddingHorizontal: 20, paddingVertical: 18 },
+  backButton: { marginBottom: 10, width: 32 },
+  backButtonFloating: { position: 'absolute', top: 16, left: 16, padding: 4, zIndex: 10 },
   headerLabel: { color: '#9FB3D1', fontSize: 12, fontWeight: '600', letterSpacing: 0.5, marginBottom: 4 },
   headerTitle: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
   content: { padding: 16, gap: 12 },
   card: { backgroundColor: '#fff', borderRadius: 14, padding: 16, gap: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  center:{justifyContent: 'center', alignItems: 'center', textAlign: 'center'},
-  loadingText:{ marginTop: 12, fontSize: 16, color: '#1B3A6B'},
+  center: { justifyContent: 'center', alignItems: 'center', textAlign: 'center' },
+  loadingText: { marginTop: 12, fontSize: 16, color: '#1B3A6B' },
   cardBorderBlue: { borderLeftWidth: 4, borderLeftColor: '#2E7DD7' },
   cardBorderOrange: { borderLeftWidth: 4, borderLeftColor: '#F5A623' },
   cardBorderGreen: { borderLeftWidth: 4, borderLeftColor: '#1E8449' },
