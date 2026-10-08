@@ -32,7 +32,7 @@ export default function TelaHome() {
               <Ionicons name="speedometer-outline" size={28} color="#2E7DD7" />
             </View>
             <View style={styles.buttonTextWrap}>
-              <Text style={styles.buttonTitle}>Sensores</Text>
+              <Text style={styles.buttonTitle}>Monitoramento</Text>
               <Text style={styles.buttonDesc}>Telemetria em tempo real da cura, pressão, temperaturas e lâmpadas UV.</Text>
             </View>
             <Ionicons name="chevron-forward" size={22} color="#8895A7" />
