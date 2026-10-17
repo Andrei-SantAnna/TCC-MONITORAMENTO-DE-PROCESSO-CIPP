@@ -1,36 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
-import { WS_URL } from '../services/websocket';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { obterUrlWebSocket, type LeituraSensor, type InteligenciaPred, type PrevisaoCura, type MensagemLeitura, type MensagemWS } from '../services/websocket';
 import { useMonitoramento } from './useMonitoramento';
 
-export interface LeituraSensor {
-  minuto: number;
-  time: string;
-  distancia_m: number;
-  velocidade_cm_min: number;
-  pressao_mbar: number;
-  temp1_c: number;
-  temp2_c: number;
-  temp3_c: number;
-  temp_ambiente_c: number;
-  uv_lamps: number[]; 
-  limite_teorico: number;
-  desvio_cm_min: number;
-  alerta: boolean;
-}
-
-export interface InteligenciaPred {
-  ignicao_segura: { pronta: boolean; tempo_restante_min: number };
-  anomalia_termica: string | null;
-  recomendacao_acao: string;
-  tempos_ignicao: { intervalo_lampada_seg: number; tempo_ocioso_seg: number };
-}
-
-export interface PrevisaoCura {
-  distancia_restante_m: number;
-  tempo_estimado_min: number;
-  tempo_texto: string;
-  status_movimento: string;
-}
+export type { LeituraSensor, InteligenciaPred, PrevisaoCura } from '../services/websocket';
 
 interface SensorContextType {
   telemetria: LeituraSensor | null;
@@ -40,88 +12,139 @@ interface SensorContextType {
   finalizado: boolean;
   conectado: boolean;
   erro: string | null;
+  trechoAtual: string | null;
+  mensagemFinal: string | null;
+  iniciando: boolean;
+  avisoOperacional: string | null;
+  blocoOperacional: number;
+}
+const SensorContext = createContext<SensorContextType | null>(null);
+const MAX_PONTOS_GRAFICO = 120;
+
+function mensagemValida(dado: unknown): dado is MensagemWS {
+  if (!dado || typeof dado !== 'object') return false;
+  const msg = dado as Record<string, unknown>;
+  if (msg.status === 'finalizado' || msg.status === 'erro') return typeof msg.mensagem === 'string';
+  if (!msg.telemetria || typeof msg.telemetria !== 'object') return false;
+  const t = msg.telemetria as Record<string, unknown>;
+  return Array.isArray(t.uv_lamps) && typeof t.minuto === 'number'
+    && typeof msg.inteligencia === 'object' && !!msg.inteligencia
+    && typeof msg.previsao_cura === 'object' && !!msg.previsao_cura;
 }
 
-// Cria o contexto (inicialmente nulo)
-const SensorContext = createContext<SensorContextType | null>(null);
-
-// Variável global para guardar a conexão (Padrão Singleton)
-let socketGlobal: WebSocket | null = null;
-
-// O Provider deve ser um componente funcional React que retorna JSX
 export function SensorProvider({ children }: Readonly<{ children: ReactNode }>) {
-  const [telemetria, setTelemetria] = useState<LeituraSensor | null>(null);
-  const [inteligencia, setInteligencia] = useState<InteligenciaPred | null>(null);
-  const [previsaoCura, setPrevisaoCura] = useState<PrevisaoCura | null>(null);
-  const [historico, setHistorico] = useState<LeituraSensor[]>([]); 
-
+  // Uma única atualização por pacote recebido: Sensores e Previsões exibem
+  // sempre os campos produzidos a partir da MESMA leitura do WebSocket.
+  const [pacoteAtual, setPacoteAtual] = useState<MensagemLeitura | null>(null);
+  const telemetria = pacoteAtual?.telemetria ?? null;
+  const inteligencia = pacoteAtual?.inteligencia ?? null;
+  const previsaoCura = pacoteAtual?.previsao_cura ?? null;
+  const [historico, setHistorico] = useState<LeituraSensor[]>([]);
   const [finalizado, setFinalizado] = useState(false);
   const [conectado, setConectado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  
-  const { monitoramentoAtivo } = useMonitoramento();
+  const [trechoAtual, setTrechoAtual] = useState<string | null>(null);
+  const [mensagemFinal, setMensagemFinal] = useState<string | null>(null);
+  const [iniciando, setIniciando] = useState(false);
+  const [avisoOperacional, setAvisoOperacional] = useState<string | null>(null);
+  const [blocoOperacional, setBlocoOperacional] = useState<number>(1);
+  const trechoRef = useRef<string | null>(null);
+  const blocoRef = useRef<number>(0);
+  const { monitoramentoAtivo, sessaoMonitoramento, trechoSelecionado } = useMonitoramento();
 
   useEffect(() => {
-    // Só inicia se o utilizador já tiver clicado no botão Iniciar
-    if (!monitoramentoAtivo) return;
-
-    // Se a conexão global já existe e está ativa, não abre outra!
-    if (socketGlobal && (socketGlobal.readyState === WebSocket.CONNECTING || socketGlobal.readyState === WebSocket.OPEN)) {
+    if (!monitoramentoAtivo) {
+      setConectado(false);
+      setIniciando(false);
       return;
     }
+    let ativo = true;
+    let terminou = false;
+    let apresentouErro = false;
+    let socket: WebSocket;
+    setFinalizado(false); setMensagemFinal(null); setErro(null);
+    setPacoteAtual(null);
+    setAvisoOperacional(null); setBlocoOperacional(1);
+    setHistorico([]); setTrechoAtual(null); trechoRef.current = null; blocoRef.current = 0;
+    setConectado(false); setIniciando(true);
 
-    // Caso contrário, abre a única conexão permitida
-    socketGlobal = new WebSocket(WS_URL);
-
-    socketGlobal.onopen = () => {
-      setConectado(true);
-      setErro(null);
+    try {
+      socket = new WebSocket(obterUrlWebSocket(trechoSelecionado));
+    } catch {
+      setIniciando(false);
+      setErro('URL do WebSocket inválida. Confira EXPO_PUBLIC_WS_URL.');
+      return;
+    }
+    socket.onopen = () => {
+      if (!ativo) return;
+      setConectado(true); setIniciando(false); setErro(null);
     };
-
-    socketGlobal.onmessage = (event) => {
-      const dados = JSON.parse(event.data);
-
-      if (dados.status === 'finalizado') {
-        setFinalizado(true);
-      } else if (dados.telemetria) {
-        setTelemetria(dados.telemetria);
-        setInteligencia(dados.inteligencia);
-        setPrevisaoCura(dados.previsao_cura);
-        setHistorico((prev) => [...prev, dados.telemetria]); 
+    socket.onmessage = event => {
+      if (!ativo) return;
+      try {
+        const raw: unknown = JSON.parse(event.data);
+        if (!mensagemValida(raw)) throw new Error('Formato de mensagem inválido');
+        if ('status' in raw) {
+          if (raw.status === 'finalizado') {
+            terminou = true;
+            setFinalizado(true); setMensagemFinal(raw.mensagem);
+          } else {
+            apresentouErro = true;
+            setErro(raw.mensagem);
+          }
+          return;
+        }
+        const leitura = raw.telemetria;
+        const trecho = leitura.trecho_origem || 'Trecho não identificado';
+        const bloco = raw.metadados_simulacao?.bloco_operacional ?? leitura.bloco_operacional ?? 1;
+        // Interrupção grande = novo bloco analítico, mesmo dentro do mesmo trecho.
+        if (trechoRef.current !== trecho || blocoRef.current !== bloco) {
+          trechoRef.current = trecho;
+          blocoRef.current = bloco;
+          setTrechoAtual(trecho);
+          setBlocoOperacional(bloco);
+          setHistorico([leitura]);
+        } else {
+          setHistorico(prev => [...prev, leitura].slice(-MAX_PONTOS_GRAFICO));
+        }
+        setAvisoOperacional(raw.metadados_simulacao?.aviso_operacional ?? null);
+        setPacoteAtual(raw);
+      } catch {
+        apresentouErro = true;
+        setErro('Mensagem WebSocket inválida ou incompatível com o backend.');
       }
     };
-
-    socketGlobal.onerror = () => setErro('Não foi possível conectar ao simulador.');
-    
-    socketGlobal.onclose = () => {
-      setConectado(false);
-      socketGlobal = null; 
+    socket.onerror = () => {
+      if (!ativo || terminou) return;
+      apresentouErro = true;
+      setErro('Falha de conexão com o simulador. Verifique servidor e URL.');
     };
+    socket.onclose = () => {
+      if (!ativo) return;
+      setConectado(false);
+      setIniciando(false);
+      if (!terminou && !apresentouErro) {
+        setErro('Conexão interrompida. Use Reiniciar para iniciar um novo replay.');
+      }
+    };
+    return () => {
+      ativo = false;
+      socket.onopen = null; socket.onmessage = null;
+      socket.onerror = null; socket.onclose = null;
+      socket.close();
+    };
+  }, [monitoramentoAtivo, sessaoMonitoramento, trechoSelecionado]);
 
-  }, [monitoramentoAtivo]);
-
-const valorContexto = useMemo(() => ({
-    telemetria,
-    inteligencia,
-    previsaoCura,
-    historico,
-    finalizado,
-    conectado,
-    erro
-  }), [telemetria, inteligencia, previsaoCura, historico, finalizado, conectado, erro]);
-
-  return (
-    <SensorContext.Provider value={valorContexto}>
-      {children}
-    </SensorContext.Provider>
-  );
+  const value = useMemo(() => ({
+    telemetria, inteligencia, previsaoCura, historico, finalizado,
+    conectado, erro, trechoAtual, mensagemFinal, iniciando, avisoOperacional, blocoOperacional,
+  }), [telemetria, inteligencia, previsaoCura, historico, finalizado,
+    conectado, erro, trechoAtual, mensagemFinal, iniciando, avisoOperacional, blocoOperacional]);
+  return <SensorContext.Provider value={value}>{children}</SensorContext.Provider>;
 }
 
-// O Hook que as tuas telas (sensores.tsx e previsoes.tsx) vão continuar a chamar
 export function useSensorSocket() {
-  const context = useContext(SensorContext);
-  if (!context) {
-    throw new Error('useSensorSocket deve ser usado dentro de um SensorProvider');
-  }
-  return context;
+  const ctx = useContext(SensorContext);
+  if (!ctx) throw new Error('useSensorSocket precisa de SensorProvider');
+  return ctx;
 }

@@ -3,14 +3,22 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useSensorSocket } from '../hooks/useSensorSocket';
+import { useMonitoramento } from '../hooks/useMonitoramento';
+
+function obterTituloConexao(finalizado: boolean, erro: string | null, conectado: boolean): string {
+  if (finalizado) return 'Replay encerrado';
+  if (erro) return 'Conexão interrompida';
+  return conectado ? 'Conectado' : 'Sem conexão';
+}
 
 export default function TelaPrevisoes() {
   const router = useRouter();
-  const { inteligencia, previsaoCura, conectado, erro } = useSensorSocket();
+  const { inteligencia, previsaoCura, conectado, erro, finalizado, mensagemFinal, iniciando, avisoOperacional, blocoOperacional } = useSensorSocket();
+  const { reiniciarMonitoramento } = useMonitoramento();
 
   const voltar = () => router.replace('/');
 
-  if (!conectado && !erro) {
+  if (iniciando && !inteligencia && !erro) {
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
         <TouchableOpacity style={styles.backButtonFloating} onPress={voltar}>
@@ -22,19 +30,23 @@ export default function TelaPrevisoes() {
     );
   }
 
-  if (erro || !inteligencia || !previsaoCura) {
+  if (!inteligencia || !previsaoCura) {
     return (
       <SafeAreaView style={[styles.safe, styles.center]}>
         <TouchableOpacity style={styles.backButtonFloating} onPress={voltar}>
           <Ionicons name="arrow-back" size={24} color="#1B3A6B" />
         </TouchableOpacity>
         <Ionicons name="hourglass-outline" size={40} color="#8895A7" />
-        <Text style={styles.loadingText}>Processando algoritmos preditivos...</Text>
+        <Text style={styles.loadingText}>{erro ?? 'Processando algoritmos preditivos...'}</Text>
+        {erro && <TouchableOpacity onPress={reiniciarMonitoramento} style={styles.card}><Text style={styles.infoValue}>Tentar novamente</Text></TouchableOpacity>}
       </SafeAreaView>
     );
   }
 
-  const { ignicao_segura, anomalia_termica, recomendacao_acao, tempos_ignicao } = inteligencia;
+  const { ignicao_segura, estimativa_ignicao, anomalia_termica, recomendacao_acao, tempos_ignicao } = inteligencia;
+  const formatarMinutos = (valor: number | null | undefined) =>
+    valor == null ? 'Indisponível' : `${Math.floor(valor)}min ${String(Math.round((valor % 1) * 60)).padStart(2, '0')}s`;
+
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -47,63 +59,75 @@ export default function TelaPrevisoes() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        {(finalizado || erro || !conectado) && (
+          <View style={[styles.card, styles.cardBorderOrange]}>
+            <Text style={styles.infoValue}>{obterTituloConexao(finalizado, erro, conectado)}</Text>
+            <Text style={styles.infoLabel}>{mensagemFinal ?? erro ?? 'Últimos resultados preservados.'}</Text>
+            <TouchableOpacity onPress={reiniciarMonitoramento} style={styles.card}>
+              <Text style={styles.infoValue}>Reiniciar simulação</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {avisoOperacional && (
+          <View style={[styles.card, styles.cardBorderOrange]}>
+            <Text style={styles.cardLabel}>CONTEXTO DO HISTÓRICO — BLOCO {blocoOperacional}</Text>
+            <Text style={styles.infoLabel}>{avisoOperacional}</Text>
+            <Text style={styles.infoLabel}>
+              O contador de pressão mede somente as leituras deste bloco; não reconstitui o momento da ignição anterior.
+            </Text>
+          </View>
+        )}
 
         {/* NOVO CARD PREVISÃO FÍSICA */}
         <View style={[styles.card, styles.cardBorderGreen]}>
           <Text style={styles.cardLabel}>PREVISÃO DE TÉRMINO DA CURA</Text>
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Status:</Text>
-            <Text style={[styles.infoValue, previsaoCura.status_movimento === 'Carrinho Parado' ? { color: '#F5A623' } : { color: '#1E8449' }]}>
-              {previsaoCura.status_movimento}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Distância Restante:</Text>
-            <Text style={styles.infoValue}>{previsaoCura.distancia_restante_m} m</Text>
+            <Text style={styles.infoValue}>{previsaoCura.distancia_restante_m == null ? 'Indisponível' : `${previsaoCura.distancia_restante_m.toFixed(2)} m`}</Text>
           </View>
 
           <View style={{ marginTop: 15, alignItems: 'center' }}>
             <Text style={styles.cardLabel}>FINALIZAÇÃO ESTIMADA EM:</Text>
             <Text style={[styles.bigValue, { color: '#1E8449', fontSize: 36, marginTop: 5 }]}>
-              {previsaoCura.tempo_texto}
+              {previsaoCura.tempo_estimado_min == null ? 'Indisponível' : previsaoCura.tempo_texto}
             </Text>
           </View>
         </View>
 
         <View style={[styles.card, ignicao_segura.pronta ? styles.cardBorderGreen : styles.cardBorderOrange]}>
-          <View style={styles.rowStart}>
-            <Ionicons
-              name={ignicao_segura.pronta ? "checkmark-circle" : "timer-outline"}
-              size={24}
-              color={ignicao_segura.pronta ? "#1E8449" : "#F5A623"}
-            />
-            <Text style={styles.infoValue}>
-              {ignicao_segura.pronta ? 'Pressão Estabilizada' : 'Aguardando Estabilidade'}
-            </Text>
+          <Text style={styles.cardLabel}>ESTIMATIVA DE ESTABILIZAÇÃO DA PRESSÃO</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Tempo observado na faixa de 200–300 mbar (mínimo 10 min)</Text>
+            <Text style={styles.infoValue}>{ignicao_segura.duracao_observada_min?.toFixed(1).replace('.', ',') ?? '0,0'} min</Text>
           </View>
-          <Text style={styles.infoLabel}>
-            {ignicao_segura.pronta
-              ? 'A pressão de trabalho se manteve constante por 10 minutos. O manual autoriza o início da ignição.'
-              : 'O manual exige pressão constante por 10 min antes da ignição para evitar danos no liner.'}
+          <Text style={[styles.bigValue, { textAlign: 'center', color: ignicao_segura.pronta ? '#1E8449' : '#1B3A6B' }]}>
+            {ignicao_segura.pronta ? 'Critério atendido' : formatarMinutos(ignicao_segura.tempo_restante_min)}
           </Text>
+          <Text style={styles.infoLabel}>{ignicao_segura.status ?? 'Verificando histórico de pressão'}</Text>
         </View>
 
-        {!ignicao_segura.pronta && (
-          <View style={[styles.card, styles.center, { paddingVertical: 30 }]}>
-            <Text style={styles.cardLabel}>TEMPO PARA ESTABILIDADE TÉRMICA</Text>
-            <Text style={[styles.bigValue, { fontSize: 42, marginVertical: 10 }]}>
-              0{ignicao_segura.tempo_restante_min}:00 min
-            </Text>
-          </View>
-        )}
+        <View style={[styles.card, styles.cardBorderOrange]}>
+          <Text style={styles.cardLabel}>ESTIMATIVA PARA O REQUISITO DE PRESSÃO DA IGNIÇÃO UV</Text>
+          <Text style={[styles.bigValue, { textAlign: 'center' }]}>
+            {estimativa_ignicao?.criterio_pressao_atendido
+              ? 'Condição atendida'
+              : formatarMinutos(estimativa_ignicao?.tempo_minimo_condicao_pressao_min)}
+          </Text>
+          <Text style={styles.infoLabel}>
+            {estimativa_ignicao?.status ?? 'Estimativa de ignição não disponibilizada pelo backend.'}
+          </Text>
+          <Text style={[styles.infoLabel, { marginTop: 4 }]}>
+            O aplicativo não confirma o momento seguro de ignição. Outras verificações previstas no procedimento são necessárias.
+          </Text>
+        </View>
 
         <View style={[styles.card, styles.cardBorderBlue]}>
           <Text style={styles.cardLabel}>DIRETRIZ DE IGNIÇÃO UV (ANEXO 8)</Text>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Intervalo por lâmpada</Text>
-            <Text style={styles.infoValue}>{tempos_ignicao.intervalo_lampada_seg} seg</Text>
+            <Text style={styles.infoLabel}>Intervalo por núcleo</Text>
+            <Text style={styles.infoValue}>{tempos_ignicao.intervalo_nucleo_seg ?? tempos_ignicao.intervalo_lampada_seg} seg</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Tempo Ocioso (Idle)</Text>

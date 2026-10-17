@@ -17,7 +17,7 @@ const TOPICOS: Topico[] = [
     cor: '#2E7DD7',
     titulo: 'Localização no trecho',
     descricao:
-      'A Distância Atual indica quantos metros o conjunto de cura já percorreu no trecho do duto. Esse valor localiza o robô ao longo da obra e alimenta o cálculo de quanto falta para concluir a cura.',
+      'A posição atual é uma coordenada relativa registrada no histórico. Ela não equivale necessariamente à distância percorrida. O cálculo de distância restante exige uma coordenada de término validada.',
   },
   {
     icone: 'water-outline',
@@ -54,7 +54,7 @@ const TOPICOS: Topico[] = [
       },
       {
         badge: 'T3',
-        texto: 'Liner Sensor 3: zona ideal entre 100 °C e 140 °C. Acima disso, o limite da velocidade de tração pode aumentar para evitar queima.',
+        texto: 'Liner Sensor 3: zona ideal entre 100 °C e 140 °C. Fora da faixa, o operador deve avaliar os parâmetros e o procedimento aplicável; o sistema não altera automaticamente a velocidade.',
       },
     ],
   },
@@ -63,7 +63,7 @@ const TOPICOS: Topico[] = [
     cor: '#6600FF',
     titulo: 'Módulo de cura UV',
     descricao:
-      'O robô usa um sistema Double-Core com 8 lâmpadas ultravioleta, divididas em dois núcleos. Cada bloco numerado na tela representa uma lâmpada: verde indica ligada e cinza indica desligada. Elas acendem em sequência segundo o esquema de ignição, curando a resina de dentro para fora.',
+      'O robô usa um sistema Double-Core com 8 lâmpadas ultravioleta, divididas em dois núcleos. Cada bloco numerado na tela representa uma lâmpada: verde indica código 2 e cinza os demais códigos. O significado operacional dos códigos ainda deve ser confirmado com a documentação do equipamento. Elas acendem em sequência segundo o esquema de ignição, curando a resina de dentro para fora.',
   },
   {
     icone: 'trending-up-outline',
@@ -77,7 +77,7 @@ const TOPICOS: Topico[] = [
     cor: '#1E8449',
     titulo: 'Cura finalizada',
     descricao:
-      'Quando o processo CIPP termina, a telemetria encerra e a tela de sensores exibe um aviso de conclusão. A partir daí o streaming deixa de receber novas leituras.',
+      'Quando termina a simulação, a telemetria encerra e a tela exibe um aviso. Isso não certifica a conclusão técnica da cura. A partir daí o streaming deixa de receber novas leituras.',
   },
 ];
 
