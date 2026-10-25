@@ -14,29 +14,29 @@ Aplicativo de apoio ao acompanhamento de operações de reabilitação de tubula
 
 ## Telas do aplicativo
 
-As telas abaixo pertencem ao protótipo utilizado no TCC. As capturas devem ser armazenadas em `docs/screenshots/` para serem exibidas automaticamente nesta seção.
+As telas abaixo pertencem ao protótipo utilizado no TCC. **As imagens serão exibidas assim que os arquivos WebP forem adicionados à pasta `docs/screenshots/`.**
 
 ### 1. Início
 
-**Arquivo da captura:** `docs/screenshots/inicio.webp`
+![Tela Início](docs/screenshots/inicio.webp)
 
 É a porta de entrada do aplicativo. Permite abrir o **Monitoramento** e o **Sumário**. Na versão de testes, o seletor também permite reproduzir todos os históricos ou escolher individualmente os trechos 85, 86, 88 e 89; a seleção de outro trecho reinicia a sessão de replay.
 
 ### 2. Sensores / Telemetria
 
-**Arquivo da captura:** `docs/screenshots/sensores.webp`
+![Tela Sensores e telemetria](docs/screenshots/sensores.webp)
 
 Apresenta as leituras operacionais recebidas pelo WebSocket: posição, pressão interna, velocidade, temperaturas e estados das lâmpadas UV. Exibe avisos de desvio, indicadores de qualidade da telemetria e evolução térmica. Dados indisponíveis ou discrepantes não devem ser interpretados como medições válidas.
 
 ### 3. Previsões / Inteligência Preditiva
 
-**Arquivo da captura:** `docs/screenshots/previsoes.webp`
+![Tela Previsões e estimativas](docs/screenshots/previsoes.webp)
 
 Mostra a distância restante **até uma posição de referência**, o tempo estimado de deslocamento e o tempo faltante para completar o **critério monitorado de pressão**. A estimativa de deslocamento pressupõe velocidade constante; sem um ponto final validado, ela **não equivale necessariamente ao tempo real até o fim da cura**. O requisito de pressão **não constitui autorização para acender as lâmpadas**.
 
 ### 4. Sumário dos sensores
 
-**Arquivo da captura:** `docs/screenshots/sumario.webp`
+![Tela Sumário dos sensores](docs/screenshots/sumario.webp)
 
 Funciona como guia de leitura do aplicativo. Explica os indicadores de localização, pressão, cinemática, temperaturas, módulo UV e gráfico térmico, ajudando o leitor a interpretar o que é apresentado na tela de Sensores.
 
